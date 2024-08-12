@@ -1,0 +1,142 @@
+---
+layout: post
+title:  "Thing 2: Publish to S3 bucket from Github Repo"
+date:   2024-08-12 08:18:00 -0600
+categories: things
+---
+Picking up where [Thing 1]({{ site.baseurl }}{% post_url 2024-08-12-thing-1 %}) left off, we're going to explore how to populate an S3 bucket directly and automatically from a Github repository on a check in to the main branch.  
+
+The starting point here is we have an S3 bucket that is serving up a single html file.
+
+![DNS Config 9](/assets/thing0001_dns_config_9.png "DNS Config 9")
+
+
+> #### **Goal of this thing:**
+>  Update static website source files in S3 from Github on code push to main.
+
+As with most things in technology there are tons of ways accomplish a thing.  This is just one way.
+
+---
+*All steps and screenshots are accurate as of August 2024.  Things change.  Your results may vary, people of the future.*
+
+### Part 1: Set up a repo on Github
+
+I've picked a random website template I found via Google on a website called [HTML5up](https://html5up.net/). I'm going to go with the `Story` theme because why not.  It looks pretty.
+
+![Files 1](/assets/thing0002_files_1.png "Files 1")
+
+Head on over to [Github](https://github.com/) and create a new repo.
+
+As far as I know this does have to be a public repo.  This is totally fine since these are all static web files so there is nothing secret in them.
+
+![Github 1](/assets/thing0002_github_1.png "Github 1")
+
+I do not intend this to be much of Github basics guide so I'll just summarize by saying ***in some way check in those files to your new repo in the main branch***. 
+
+The main thing to be careful of is place all your web files in a sub directory called public.
+
+If you are doing this from your desktop and not comfortable with the command line, [Github Desktop](https://github.com/apps/desktop) may be a good solution.  It's super easy to use.
+
+![Github 2](/assets/thing0002_github_2.png "Github 2")
+
+Similarly, I do not intend for this thing to be an AWS security guide. So that said use AWS [best practices](https://docs.aws.amazon.com/IAM/latest/UserGuide/best-practices.html) to use a scoped down role and generate an access key pair.
+
+Now with that key pair in hand, we need to put them securely in place on Github.
+
+Click `Settings` on the top nav bar of your repo.
+
+![Github 3](/assets/thing0002_github_3.png "Github 3")
+
+In the left menu under `Security`, expand `Secrets and variables`
+
+Click `Actions`
+
+Click `New repository secret`
+
+![Github 4](/assets/thing0002_github_4.png "Github 4")
+
+Create a new secret for `AWS_ACCESS_KEY_ID`, and enter your access key
+
+![Github 5](/assets/thing0002_github_5.png "Github 5")
+
+Create one more for the secret `AWS_SECRET_ACCESS_KEY` and enter it.
+
+![Github 6](/assets/thing0002_github_6.png "Github 6")
+
+They should look something like this
+
+![Github 7](/assets/thing0002_github_7.png "Github 7")
+
+Click `Variables`.  Create a new repository variable for the bucket name.  Be sure you use the root domain name, and NOT the www prefix.
+
+![Github 8](/assets/thing0002_github_8.png "Github 8")
+
+It should appear like this
+
+![Github 9](/assets/thing0002_github_9.png "Github 9")
+
+This is where the Github Action magic comes in. Create a new file with the following path in the repo: `.github/workflows/main.yml`
+
+With the following contents.
+
+~~~yaml
+name: Upload Website
+
+on:
+  push:
+    branches:
+    - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v1
+
+    - name: Configure AWS Credentials
+      uses: aws-actions/configure-aws-credentials@v1
+      with:
+        aws-access-key-id: {% raw %}${{ secrets.AWS_ACCESS_KEY_ID }}{% endraw %}
+        aws-secret-access-key: {% raw %}${{ secrets.AWS_SECRET_ACCESS_KEY }}{% endraw %}
+        aws-region: us-east-1
+
+    - name: Deploy static site to S3 bucket
+      run: aws s3 sync ./public/ s3://{% raw %}${{ vars.BUCKET }}{% endraw %} --delete
+~~~
+
+Now as soon as you commit this file to the main branch, a github action will start.  Browse to the actions section to see the results.  If it fails, click on the run for more details and try to find where it went wrong.  Maybe a typo in the secret or variables?
+
+![Github 10](/assets/thing0002_github_10.png "Github 10")
+
+Refresh your website and you should see your fancy template!
+
+![Web 1](/assets/thing0002_web_1.png "Web 1")
+
+Now any time you make a commit to this branch, the github action will kick off and automatically move it over to S3. If you are as old as me, this feels like when we used to FTP files to web servers for every change. Good times.
+
+Make a change in VS Code:
+
+![Web 2](/assets/thing0002_web_2.png "Web 2")
+
+Commited Change on Github:
+
+![Web 3](/assets/thing0002_web_3.png "Web 3")
+
+Github action ran:
+
+![Web 4](/assets/thing0002_web_4.png "Web 4")
+
+Change is live right away:
+
+![Web 5](/assets/thing0002_web_5.png "Web 5")
+
+---
+*References:*
+
+[Basic Company Website ](https://html5up.net/)
+
+[Story Theme](https://html5up.net/story/download)
+
+[Inspiration for this thing came from this medium article](https://medium.com/@olayinkasamuel44/how-to-deploy-a-static-website-to-s3-bucket-using-github-actions-ci-script-fa1acc932fbd)
+
