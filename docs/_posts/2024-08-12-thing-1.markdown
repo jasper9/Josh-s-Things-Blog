@@ -1,0 +1,7 @@
+---
+layout: post
+title:  "Thing 1 : Static website hosting on S3 via GitHub Actions"
+date:   2024-08-12 08:18:00 -0600
+categories: things web publicCloud
+---
+This is just some text
