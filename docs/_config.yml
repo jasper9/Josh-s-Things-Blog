@@ -29,14 +29,14 @@ twitter_username: jasper9
 github_username:  jasper9
 
 # Build settings
-theme: minima
+#theme: minima
 remote_theme: jekyll/minima
 plugins:
   - jekyll-feed
   - jekyll-remote-theme
 
 minima:
-  skin: dark
+  skin: solarized-dark #dark
   social_links:
     - { platform: github,  user_url: "https://github.com/jekyll/jekyll" }
     - { platform: twitter, user_url: "https://twitter.com/jekyllrb" }
