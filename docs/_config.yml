@@ -25,19 +25,21 @@ description: >- # this means to ignore newlines until "baseurl:"
 
 baseurl: "" # the subpath of your site, e.g. /blog
 url: "http://blog.joshsthings.com" # the base hostname & protocol for your site, e.g. http://example.com
-twitter_username: jasper9 (on threads, not the deadbird site)
+twitter_username: jasper9
 github_username:  jasper9
 
 # Build settings
-#theme: minima
+theme: minima
 remote_theme: jekyll/minima
 plugins:
   - jekyll-feed
   - jekyll-remote-theme
 
 minima:
-  skin: dark
-
+  skin: Solarized-dark #dark
+  social_links:
+    - { platform: github,  user_url: "https://github.com/jekyll/jekyll" }
+    - { platform: twitter, user_url: "https://twitter.com/jekyllrb" }
 # Exclude from processing.
 # The following items will not be processed, by default.
 # Any item listed under the `exclude:` key here will be automatically added to
