@@ -36,7 +36,7 @@ plugins:
   - jekyll-remote-theme
 
 minima:
-  skin: Solarized-dark #dark
+  skin: solarized-dark #dark
   social_links:
     - { platform: github,  user_url: "https://github.com/jekyll/jekyll" }
     - { platform: twitter, user_url: "https://twitter.com/jekyllrb" }
