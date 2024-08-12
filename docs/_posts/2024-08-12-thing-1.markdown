@@ -2,7 +2,7 @@
 layout: post
 title:  "Thing 1: Static website hosting on S3"
 date:   2024-08-12 08:18:00 -0600
-categories: things web publicCloud aws s3
+categories: things
 ---
 I used to create content on a blog I loving called `Josh as a Service` where I documented various zany projects such as `Dinner as a Service` which demonstrated integration points in VMware VCAC/VRA/Aria to external API's by using a Raspberry PI & Arduino and a Sous Vide cooker.  To make food.  It was awesome. 
 
