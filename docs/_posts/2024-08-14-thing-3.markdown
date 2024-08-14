@@ -1,0 +1,235 @@
+---
+layout: post
+title:  "Thing 3: Static website hosting on S3 with Terraform"
+date:   2024-08-12 08:18:00 -0600
+categories: things
+---
+
+Here we are going to revist [Thing 1]({{ site.baseurl }}{% post_url 2024-08-12-thing-1 %}) but instead of doing all the clicky clicky manually in the AWS console, we are going to use [Terraform](https://www.terraform.io/) to script it.
+
+The Github repo for this thing can be found [here](https://github.com/jasper9/thing3-terraform-static-web-s3)
+
+> #### **Goal of this thing:**
+>  Automate the configuration of a static website being served from an S3 bucket.
+
+I took heavy inspiration from [this](https://medium.com/@itsmattburgess/hosting-a-https-website-using-aws-s3-and-cloudfront-ee6521df03b9) blog post and it's gitrepo [here](https://github.com/mtburge/website-terraform).  That one used Cloudfront which we'll explore in the future, AND it's about 7 years old from the time of this writing so there are quite a number a syntax and changes that had to be done.
+
+---
+*All steps and screenshots are accurate as of August 2024.  Things change.  Your results may vary, people of the future. AWS v5.62.0, Terraform v1.9.4 on Windows*
+
+### Part 1: Terraform Details
+
+I'm not going to dive into the basics of Terraform here.  Maybe I'll write that up in the future. For now, note that I'm storing the state file in a seperate S3 bucket so make a change to that if you need to.
+
+~~~hcl
+terraform {
+    backend "s3" {
+        bucket = "jgray-terraform-state"
+        key = "state/thing3-s3.tfstate"
+        region = "us-east-1"
+        encrypt = true
+    }
+}
+~~~
+
+The only variable that needs to be changed to repurpose this code is to change the domain in the main.tf here:
+
+~~~js
+module "s3-static-web-hosting" {
+    source = "./modules/s3-static-web-hosting"
+    domain = "notnormal.cloud"
+    domain_alias = "www.notnormal.cloud"
+}
+~~~
+
+I am not going to cut and paste the whole module here, so browse through it yourself [here](https://github.com/jasper9/thing3-terraform-static-web-s3/blob/main/modules/s3-static-web-hosting/main.tf).
+
+As you read through it, the code litterally does walk through all the configuration you do for yourself with all the tweaks that makes the serving of web files possible.
+
+~~~js
+resource "aws_s3_bucket" "domain" {
+    bucket = var.domain
+    force_destroy = true
+}
+
+resource "aws_s3_bucket_website_configuration" "domain" {
+    depends_on = [aws_s3_bucket.domain]
+    bucket = var.domain
+    index_document {
+        suffix = "index.html" 
+    }
+
+    error_document {
+        key = "error.html" 
+    }
+}
+~~~
+
+It sets the policy correctly from an included json file:
+
+~~~js
+resource "aws_s3_bucket_policy" "allow_access_from_another_account" {
+  depends_on = [ aws_s3_bucket_ownership_controls.domain ]
+  bucket = aws_s3_bucket.domain.id
+  policy = templatefile("./s3-policy.json", { bucket = var.domain })
+}
+~~~
+
+This code even uploads a single placeholder html file as well:
+
+~~~js
+resource "aws_s3_object" "domain" {
+  depends_on = [ aws_s3_bucket_ownership_controls.domain ]
+  bucket = aws_s3_bucket.domain.id
+  key    = "index.html"
+  source = "example_index.html"
+  acl    = "public-read"
+  content_type = "text/html"
+}
+~~~
+
+It then goes on to the Route 53 configuration, using references to the S3 bucket (just a snippet here)
+
+~~~js
+resource "aws_route53_record" "a" {
+    depends_on = [aws_s3_bucket_website_configuration.domain]
+    zone_id = aws_route53_zone.domain.zone_id
+    name = var.domain
+    type = "A"
+
+    alias {
+        name = aws_s3_bucket_website_configuration.domain.website_endpoint
+        zone_id = aws_s3_bucket.domain.hosted_zone_id
+        evaluate_target_health = false
+    }
+}
+~~~
+
+### Part 2: Terraform Apply
+
+Run the Terraform and it does all the magic.  Creating the DNS records takes the longest in this process but it really is only about a minute or so total.
+
+~~~shell
+> terraform apply
+...
+...
+module.s3-static-web-hosting.aws_route53_zone.domain: Creating...
+module.s3-static-web-hosting.aws_s3_bucket.domain: Creating...
+module.s3-static-web-hosting.aws_s3_bucket.domain_alias: Creating...
+module.s3-static-web-hosting.aws_s3_bucket.domain: Creation complete after 1s [id=notnormal.cloud]
+module.s3-static-web-hosting.aws_s3_bucket_ownership_controls.domain: Creating...
+module.s3-static-web-hosting.aws_s3_bucket_website_configuration.domain: Creating...
+module.s3-static-web-hosting.aws_s3_bucket_public_access_block.domain: Creating...
+module.s3-static-web-hosting.aws_s3_bucket.domain_alias: Creation complete after 1s [id=www.notnormal.cloud]
+module.s3-static-web-hosting.aws_s3_bucket_website_configuration.domain_alias: Creating...
+module.s3-static-web-hosting.aws_s3_bucket_website_configuration.domain: Creation complete after 1s [id=notnormal.cloud]
+module.s3-static-web-hosting.aws_s3_bucket_ownership_controls.domain: Creation complete after 1s [id=notnormal.cloud]
+module.s3-static-web-hosting.aws_s3_bucket_policy.allow_access_from_another_account: Creating...
+module.s3-static-web-hosting.aws_s3_object.domain: Creating...
+module.s3-static-web-hosting.aws_s3_bucket_public_access_block.domain: Creation complete after 1s [id=notnormal.cloud]
+module.s3-static-web-hosting.aws_s3_bucket_acl.domain: Creating...
+module.s3-static-web-hosting.aws_s3_bucket_website_configuration.domain_alias: Creation complete after 1s [id=www.notnormal.cloud]
+module.s3-static-web-hosting.aws_s3_bucket_acl.domain: Creation complete after 0s [id=notnormal.cloud,public-read]
+module.s3-static-web-hosting.aws_s3_object.domain: Creation complete after 0s [id=index.html]
+module.s3-static-web-hosting.aws_s3_bucket_policy.allow_access_from_another_account: Creation complete after 0s [id=notnormal.cloud]
+module.s3-static-web-hosting.aws_route53_zone.domain: Still creating... [10s elapsed]
+module.s3-static-web-hosting.aws_route53_zone.domain: Still creating... [20s elapsed]
+module.s3-static-web-hosting.aws_route53_zone.domain: Still creating... [30s elapsed]
+module.s3-static-web-hosting.aws_route53_zone.domain: Creation complete after 38s [id=Z05276575TG4XM931SKV]
+module.s3-static-web-hosting.aws_route53_record.www: Creating...
+module.s3-static-web-hosting.aws_route53_record.a: Creating...
+module.s3-static-web-hosting.aws_route53_record.www: Still creating... [10s elapsed]
+module.s3-static-web-hosting.aws_route53_record.a: Still creating... [10s elapsed]
+module.s3-static-web-hosting.aws_route53_record.www: Still creating... [20s elapsed]
+module.s3-static-web-hosting.aws_route53_record.a: Still creating... [20s elapsed]
+module.s3-static-web-hosting.aws_route53_record.a: Still creating... [30s elapsed]
+module.s3-static-web-hosting.aws_route53_record.www: Still creating... [30s elapsed]
+module.s3-static-web-hosting.aws_route53_record.www: Still creating... [40s elapsed]
+module.s3-static-web-hosting.aws_route53_record.a: Still creating... [40s elapsed]
+module.s3-static-web-hosting.aws_route53_record.a: Creation complete after 46s [id=Z05276575TG4XM931SKV_notnormal.cloud_A]
+module.s3-static-web-hosting.aws_route53_record.www: Creation complete after 47s [id=Z05276575TG4XM931SKV_www.notnormal.cloud_A]
+
+Apply complete! Resources: 12 added, 0 changed, 0 destroyed.
+~~~
+
+Load up the website to verify it's live:
+
+![Web 1](/assets/thing0003_web_0001.png "Web 1")
+
+If we revist the github repo we made in [Thing 2]({{ site.baseurl }}{% post_url 2024-08-12-thing-2 %}), we just have to rerun the action and the files will re-populate the bucket.  Even though this is a *new* bucket, the code in github doesn't care.  We have the secrets stored in variables there, assuming we kept the bucket name consistent, it just does it's thing and uploads the files.
+
+![Web 2](/assets/thing0003_web_0002.png "Web 2")
+
+And we're back again
+
+![Web 3](/assets/thing0003_web_0003.png "Web 3")
+
+### Part 2: Terraform Destroy
+
+And lastly, since all this is infrastructure as code (IaC, as the kids say), it's super easy to tear down.  This took only a minute with Terraform when clicking around in the console could take much longer (and you would probably miss a component too!).
+
+~~~shell
+> terraform destroy
+module.s3-static-web-hosting.aws_route53_zone.domain: Refreshing state... [id=Z05276575TG4XM931SKV]
+module.s3-static-web-hosting.aws_s3_bucket.domain: Refreshing state... [id=notnormal.cloud]
+module.s3-static-web-hosting.aws_s3_bucket.domain_alias: Refreshing state... [id=www.notnormal.cloud]
+module.s3-static-web-hosting.aws_s3_bucket_ownership_controls.domain: Refreshing state... [id=notnormal.cloud]
+module.s3-static-web-hosting.aws_s3_bucket_website_configuration.domain_alias: Refreshing state... [id=www.notnormal.cloud]
+module.s3-static-web-hosting.aws_s3_bucket_public_access_block.domain: Refreshing state... [id=notnormal.cloud]
+module.s3-static-web-hosting.aws_s3_bucket_website_configuration.domain: Refreshing state... [id=notnormal.cloud]
+module.s3-static-web-hosting.aws_s3_bucket_policy.allow_access_from_another_account: Refreshing state... [id=notnormal.cloud]
+module.s3-static-web-hosting.aws_s3_bucket_acl.domain: Refreshing state... [id=notnormal.cloud,public-read]
+module.s3-static-web-hosting.aws_s3_object.domain: Refreshing state... [id=index.html]
+module.s3-static-web-hosting.aws_route53_record.a: Refreshing state... [id=Z05276575TG4XM931SKV_notnormal.cloud_A]
+module.s3-static-web-hosting.aws_route53_record.www: Refreshing state... [id=Z05276575TG4XM931SKV_www.notnormal.cloud_A]
+
+Terraform used the selected providers to generate the following execution plan. Resource actions are indicated with the
+following symbols:
+....
+....
+module.s3-static-web-hosting.aws_s3_bucket_policy.allow_access_from_another_account: Destroying... [id=notnormal.cloud]
+module.s3-static-web-hosting.aws_s3_bucket_website_configuration.domain_alias: Destroying... [id=www.notnormal.cloud]
+module.s3-static-web-hosting.aws_route53_record.www: Destroying... [id=Z05276575TG4XM931SKV_www.notnormal.cloud_A]
+module.s3-static-web-hosting.aws_route53_record.a: Destroying... [id=Z05276575TG4XM931SKV_notnormal.cloud_A]
+module.s3-static-web-hosting.aws_s3_object.domain: Destroying... [id=index.html]
+module.s3-static-web-hosting.aws_s3_bucket_acl.domain: Destroying... [id=notnormal.cloud,public-read]
+module.s3-static-web-hosting.aws_s3_bucket_acl.domain: Destruction complete after 0s
+module.s3-static-web-hosting.aws_s3_bucket_public_access_block.domain: Destroying... [id=notnormal.cloud]
+module.s3-static-web-hosting.aws_s3_object.domain: Destruction complete after 0s
+module.s3-static-web-hosting.aws_s3_bucket_website_configuration.domain_alias: Destruction complete after 0s
+module.s3-static-web-hosting.aws_s3_bucket.domain_alias: Destroying... [id=www.notnormal.cloud]
+module.s3-static-web-hosting.aws_s3_bucket_policy.allow_access_from_another_account: Destruction complete after 0s
+module.s3-static-web-hosting.aws_s3_bucket_ownership_controls.domain: Destroying... [id=notnormal.cloud]
+module.s3-static-web-hosting.aws_s3_bucket.domain_alias: Destruction complete after 0s
+module.s3-static-web-hosting.aws_s3_bucket_ownership_controls.domain: Destruction complete after 0s
+module.s3-static-web-hosting.aws_s3_bucket_public_access_block.domain: Destruction complete after 1s
+module.s3-static-web-hosting.aws_route53_record.www: Still destroying... [id=Z05276575TG4XM931SKV_www.notnormal.cloud_A, 10s elapsed]
+module.s3-static-web-hosting.aws_route53_record.a: Still destroying... [id=Z05276575TG4XM931SKV_notnormal.cloud_A, 10s elapsed]
+module.s3-static-web-hosting.aws_route53_record.a: Still destroying... [id=Z05276575TG4XM931SKV_notnormal.cloud_A, 20s elapsed]
+module.s3-static-web-hosting.aws_route53_record.www: Still destroying... [id=Z05276575TG4XM931SKV_www.notnormal.cloud_A, 20s elapsed]
+module.s3-static-web-hosting.aws_route53_record.www: Still destroying... [id=Z05276575TG4XM931SKV_www.notnormal.cloud_A, 30s elapsed]
+module.s3-static-web-hosting.aws_route53_record.a: Still destroying... [id=Z05276575TG4XM931SKV_notnormal.cloud_A, 30s elapsed]
+module.s3-static-web-hosting.aws_route53_record.www: Destruction complete after 35s
+module.s3-static-web-hosting.aws_route53_record.a: Destruction complete after 36s
+module.s3-static-web-hosting.aws_route53_zone.domain: Destroying... [id=Z05276575TG4XM931SKV]
+module.s3-static-web-hosting.aws_s3_bucket_website_configuration.domain: Destroying... [id=notnormal.cloud]
+module.s3-static-web-hosting.aws_s3_bucket_website_configuration.domain: Destruction complete after 1s
+module.s3-static-web-hosting.aws_s3_bucket.domain: Destroying... [id=notnormal.cloud]
+module.s3-static-web-hosting.aws_s3_bucket.domain: Destruction complete after 1s
+module.s3-static-web-hosting.aws_route53_zone.domain: Still destroying... [id=Z05276575TG4XM931SKV, 10s elapsed]
+module.s3-static-web-hosting.aws_route53_zone.domain: Still destroying... [id=Z05276575TG4XM931SKV, 20s elapsed]
+module.s3-static-web-hosting.aws_route53_zone.domain: Still destroying... [id=Z05276575TG4XM931SKV, 30s elapsed]
+module.s3-static-web-hosting.aws_route53_zone.domain: Still destroying... [id=Z05276575TG4XM931SKV, 40s elapsed]
+module.s3-static-web-hosting.aws_route53_zone.domain: Destruction complete after 45s
+
+Destroy complete! Resources: 12 destroyed.
+~~~
+
+---
+*References:*
+
+[Hosting a HTTPS website using AWS S3 and CloudFront](https://medium.com/@itsmattburgess/hosting-a-https-website-using-aws-s3-and-cloudfront-ee6521df03b9)
+
+[Github repo from article](https://github.com/mtburge/website-terraform)
+
+[AWS Provider Docs](https://registry.terraform.io/providers/hashicorp/aws/latest/docs)
