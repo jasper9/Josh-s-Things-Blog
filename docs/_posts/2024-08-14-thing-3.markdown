@@ -1,7 +1,7 @@
 ---
 layout: post
 title:  "Thing 3: Static website hosting on S3 with Terraform"
-date:   2024-08-12 08:18:00 -0600
+date:   2024-08-14 08:18:00 -0600
 categories: things
 ---
 
