@@ -13,7 +13,7 @@ Fast forward a bit and tech looks quite a [bit different now](https://investors.
 > #### **Goal of this thing:**
 >  What is the easiest way to host a very basic static site?
 
-I used WordPress in the past. Being a nerd of course I wanted to self host it.  So that required a compute instance somewhere.  I used AWS, I used GCP, etc.  That costs money.  It's 2024, there's gotta be something easier that's not a hosted instance right? I thought I rememebered hearing that you could turn an S3 bucket into a website somehow but didn't know any details.  So let's figure that out.
+I used WordPress in the past. Being a nerd of course I wanted to self host it.  So that required a compute instance somewhere.  I used AWS, I used GCP, etc.  That costs money.  It's 2024, there's gotta be something easier that's not a hosted instance right? I thought I remembered hearing that you could turn an S3 bucket into a website somehow but didn't know any details.  So let's figure that out.
 
 ---
 *All steps and screenshots are accurate as of August 2024.  Things change.  Your results may vary, people of the future.*
@@ -22,7 +22,7 @@ I used WordPress in the past. Being a nerd of course I wanted to self host it.  
 
 I have an old domain left over (from an addiction to buying domains I someday maybe but probably will never use ever): `notnormal.cloud`.  Let's start there. Anywhere I use this domain here, you would substitute with your own.
 
-I have this domain registered in the very awesome service [Porkbun](https://porkbun.com/), not in Route 53 (AWS' DNS service) so I need to make some adjustments. This would be the same if yours is in GoDaddy, Name.com or anywhere else. Alternatively you could transfer the domain from your current servce *into* Route 53 but that takes more time and I want it done noooow.  
+I have this domain registered in the very awesome service [Porkbun](https://porkbun.com/), not in Route 53 (AWS' DNS service) so I need to make some adjustments. This would be the same if yours is in GoDaddy, Name.com or anywhere else. Alternatively you could transfer the domain from your current service *into* Route 53 but that takes more time and I want it done noooow.  
 
 > This process essentially keeps your domain at the domain registrar of your choice, but switches to having AWS perform the DNS functions so it can be tightly integrated into the rest of their services.
 

@@ -119,7 +119,7 @@ Make a change in VS Code:
 
 ![Web 2](/assets/thing0002_web_2.png "Web 2")
 
-Commited Change on Github:
+Commit on Github:
 
 ![Web 3](/assets/thing0002_web_3.png "Web 3")
 

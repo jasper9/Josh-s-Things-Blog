@@ -85,7 +85,7 @@ Now load up the url in a browser and we're good!   Notice it DOES have SSL enabl
 
 Now the rest of this can get complex fast but I'll summarize at a high level and link to more info.
 
-We just served a static HTML page before.  However, Github Pages can use a Ruby based static site generator called [Jekyll](https://jekyllrb.com/) to simplfy templating via markdown files (and html, css etc). For those of us that not the best front end designers, this is suuuuuuper handy. 
+We just served a static HTML page before.  However, Github Pages can use a Ruby based static site generator called [Jekyll](https://jekyllrb.com/) to simplify templating via markdown files (and html, css etc). For those of us that not the best front end designers, this is suuuuuuper handy. 
 
 Here's a very quick way to apply a theme.  Check out the [docs](https://docs.github.com/en/pages/setting-up-a-github-pages-site-with-jekyll/adding-a-theme-to-your-github-pages-site-using-jekyll) for more info.
 

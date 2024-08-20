@@ -5,21 +5,21 @@ date:   2024-08-14 08:18:00 -0600
 categories: things
 ---
 
-Here we are going to revist [Thing 1]({{ site.baseurl }}{% post_url 2024-08-12-thing-1 %}) but instead of doing all the clicky clicky manually in the AWS console, we are going to use [Terraform](https://www.terraform.io/) to script it.
+Here we are going to revisit [Thing 1]({{ site.baseurl }}{% post_url 2024-08-12-thing-1 %}) but instead of doing all the clicky clicky manually in the AWS console, we are going to use [Terraform](https://www.terraform.io/) to script it.
 
 The Github repo for this thing can be found [here](https://github.com/jasper9/thing3-terraform-static-web-s3)
 
 > #### **Goal of this thing:**
 >  Automate the configuration of a static website being served from an S3 bucket.
 
-I took heavy inspiration from [this](https://medium.com/@itsmattburgess/hosting-a-https-website-using-aws-s3-and-cloudfront-ee6521df03b9) blog post and it's gitrepo [here](https://github.com/mtburge/website-terraform).  That one used Cloudfront which we'll explore in the future, AND it's about 7 years old from the time of this writing so there are quite a number a syntax and changes that had to be done.
+I took heavy inspiration from [this](https://medium.com/@itsmattburgess/hosting-a-https-website-using-aws-s3-and-cloudfront-ee6521df03b9) blog post and it's git repo [here](https://github.com/mtburge/website-terraform).  That one used Cloudfront which we'll explore in the future, AND it's about 7 years old from the time of this writing so there are quite a number a syntax and changes that had to be done.
 
 ---
 *All steps and screenshots are accurate as of August 2024.  Things change.  Your results may vary, people of the future. AWS v5.62.0, Terraform v1.9.4 on Windows*
 
 ### Part 1: Terraform Details
 
-I'm not going to dive into the basics of Terraform here.  Maybe I'll write that up in the future. For now, note that I'm storing the state file in a seperate S3 bucket so make a change to that if you need to.
+I'm not going to dive into the basics of Terraform here.  Maybe I'll write that up in the future. For now, note that I'm storing the state file in a separate S3 bucket so make a change to that if you need to.
 
 ~~~hcl
 terraform {
@@ -44,7 +44,7 @@ module "s3-static-web-hosting" {
 
 I am not going to cut and paste the whole module here, so browse through it yourself [here](https://github.com/jasper9/thing3-terraform-static-web-s3/blob/main/modules/s3-static-web-hosting/main.tf).
 
-As you read through it, the code litterally does walk through all the configuration you do for yourself with all the tweaks that makes the serving of web files possible.
+As you read through it, the code literally does walk through all the configuration you do for yourself with all the tweaks that makes the serving of web files possible.
 
 ~~~js
 resource "aws_s3_bucket" "domain" {
@@ -156,7 +156,7 @@ Load up the website to verify it's live:
 
 ![Web 1](/assets/thing0003_web_0001.png "Web 1")
 
-If we revist the github repo we made in [Thing 2]({{ site.baseurl }}{% post_url 2024-08-12-thing-2 %}), we just have to rerun the action and the files will re-populate the bucket.  Even though this is a *new* bucket, the code in github doesn't care.  We have the secrets stored in variables there, assuming we kept the bucket name consistent, it just does it's thing and uploads the files.
+If we revisit the github repo we made in [Thing 2]({{ site.baseurl }}{% post_url 2024-08-12-thing-2 %}), we just have to rerun the action and the files will re-populate the bucket.  Even though this is a *new* bucket, the code in github doesn't care.  We have the secrets stored in variables there, assuming we kept the bucket name consistent, it just does it's thing and uploads the files.
 
 ![Web 2](/assets/thing0003_web_0002.png "Web 2")
 
