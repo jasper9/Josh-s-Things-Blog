@@ -7,7 +7,7 @@ categories: things
 
 In the previous [Things]({{ site.baseurl }}{% post_url 2024-08-12-thing-1 %}) I explored a cheap way of hosting static web content via AWS S3 ([Thing 1]({{ site.baseurl }}{% post_url 2024-08-12-thing-1 %}) was manually, [Thing 3]({{ site.baseurl }}{% post_url 2024-08-14-thing-3 %}) was /w Terraform).  For this next Thing (and probably one more building upon this one) we're going to accomplish the same task but via a much more powerful service, CloudFormation.
 
-The Github repo for this thing can be found [here](https://github.com/jasper9/thing6-cloudformation-static-web-s3)
+The Github repo for this thing can be found [here](https://github.com/jasper9/collection-of-things/tree/main/thing6-cloudformation-static-web-s3)
 
 >AWS CloudFormation is a service provided by Amazon Web Services (AWS) that enables users to model and manage infrastructure resources in an automated and secure manner. Using CloudFormation, developers can define and provision AWS infrastructure resources using a JSON- or YAML-formatted infrastructure as code template. [link](https://en.wikipedia.org/wiki/AWS_CloudFormation#:~:text=AWS%20CloudFormation%20is%20a%20service,formatted%20infrastructure%20as%20code%20template.)
 
@@ -26,7 +26,7 @@ Unfortunately, CloudFormation does not have a [resource](https://docs.aws.amazon
 
 Now with that out of the way, it's time to put the yaml together that drives CloudFormation.  Let's start out with serving via just the S3 generated url without a custom domain. The following examples are all pulled from the AWS docs [here](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/quickref-s3.html)
 
-The exact yaml file can be found in my repo [here](https://github.com/jasper9/thing6-cloudformation-static-web-s3/blob/main/s3_website_cloudformation.yaml)
+The exact yaml file can be found in my repo [here](https://github.com/jasper9/collection-of-things/blob/main/thing6-cloudformation-static-web-s3/s3_website_cloudformation.yaml)
 
 ~~~yaml
 AWSTemplateFormatVersion: 2010-09-09

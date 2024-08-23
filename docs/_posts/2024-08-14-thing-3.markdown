@@ -7,7 +7,7 @@ categories: things
 
 Here we are going to revisit [Thing 1]({{ site.baseurl }}{% post_url 2024-08-12-thing-1 %}) but instead of doing all the clicky clicky manually in the AWS console, we are going to use [Terraform](https://www.terraform.io/) to script it.
 
-The Github repo for this thing can be found [here](https://github.com/jasper9/thing3-terraform-static-web-s3)
+The Github repo for this thing can be found [here](https://github.com/jasper9/collection-of-things/tree/main/thing3-terraform-static-web-s3)
 
 > #### **Goal of this thing:**
 >  Automate the configuration of a static website being served from an S3 bucket.
@@ -42,7 +42,7 @@ module "s3-static-web-hosting" {
 }
 ~~~
 
-I am not going to cut and paste the whole module here, so browse through it yourself [here](https://github.com/jasper9/thing3-terraform-static-web-s3/blob/main/modules/s3-static-web-hosting/main.tf).
+I am not going to cut and paste the whole module here, so browse through it yourself [here](https://github.com/jasper9/collection-of-things/blob/main/thing3-terraform-static-web-s3/main.tf).
 
 As you read through it, the code literally does walk through all the configuration you do for yourself with all the tweaks that makes the serving of web files possible.
 
